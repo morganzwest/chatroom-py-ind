@@ -5,7 +5,7 @@ import stdiomask
 from colorama import init
 
 import firebase_simple.database_fire as db
-from hub import DEVMODE, success_print, error_print, DATABASE
+from hub import DEVMODE, success_print, error_print, DATABASE, debug_print
 
 init()
 
@@ -15,6 +15,7 @@ class Login:
         self.collation = []
         self.usp = ""
         self.usn = ""
+        self.match_path = []
 
     def login_user_email(self):
         while True:
@@ -27,7 +28,10 @@ class Login:
 
     def login_password(self):
         while True:
-            self.usp = stdiomask.getpass(prompt = "Password: ").strip()
+            if DEVMODE:
+                self.usp = input("Password: ").strip()
+            else:
+                self.usp = stdiomask.getpass(prompt = "Password: ").strip()
             if len(self.usp) > 0:
                 break
             else:
@@ -39,7 +43,6 @@ class Login:
         # Username check
         data, usernames = DATABASE.load("/users/").get(), []
         match_count = 0
-        match_path = []
 
         # Username check explanation
         for userstring in data:
@@ -50,17 +53,23 @@ class Login:
         for user in usernames:
             if user[0] == username_email:
                 match_count += 1
-                match_path.append("/users/"+user[3])
+                self.match_path.append("/users/"+user[3])
 
-        if match_count == 0:  # Input Email
+        if len(self.match_path) == 0:  # Input Email
             for userstring in data:
                 if userstring.split(":")[1] == db.Db.hash_password(username_email)[:15]:
+
+                    cip = requests.get('https://api.ipify.org').text
+                    for ip in DATABASE.load("/variables/ip-banned").get():
+                        if ip == cip:
+                            return False
+
                     return True
             return False
-        elif match_count == 1: # Only one account with the username
+        elif len(self.match_path) == 1:  # Only one account with the username
             passwords.append(
                 DATABASE.load(
-                    match_path[0]+"/password"
+                    self.match_path[0] + "/password"
                 ).get())
 
             return db.Db.check_password(passwords[0], password)
@@ -73,9 +82,12 @@ class Login:
         password = self.login_password()
         valid = self.login_check(email_username, password)
 
-        self.collation = [match_path[0]+"/password"] if valid else []
-        if len(self.collation) > 0:
+        self.collation = self.match_path[0] if valid else "Empty path"
+        debug_print(self.collation)
+        debug_print("Valid:", valid)
+        debug_print("Match_path:", self.match_path)
 
+        return self.collation if valid else ""
 
 
 class Signup:
@@ -209,7 +221,3 @@ class Signup:
         uid = coll[1]
 
         self.signup_post(uid, username, email, password, banned)
-
-
-p = Login()
-print(p.login_check("morganz", "Mzw644257"))

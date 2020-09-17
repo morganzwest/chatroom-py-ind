@@ -2,21 +2,26 @@ import time, os
 from colorama import init, Fore
 # Internal Modules
 import loginsignup
-from hub import DATABASE, DEVMODE, success_print, error_print
+from hub import *
 
 PREFIX = "/"
 ROOM = None
+connections = []
 
 init()  # Coloured Prompt
 
 
 class Connection:
-    def __init__(self, user_id: str, username: str, email):
-        self.user_id = user_id
-        self.username = username
-        self.email = email
-        self.identifier = DATABASE.Db.hash_password(self.username + self.user_id + ':' + db.Db.hash_password(self.email)[:15])[:45]
-        self.user_path = "/users/" + self.username + self.user_id + ':' + DATABASE.Db.hash_password(self.email)[:15]
+    def __init__(self, path: str):
+        self.path = path
+        self.identifier = DATABASE.load(self.path + "/identifier").get()
+        self.username = DATABASE.load(self.path + "/username").get()
+        self.email = DATABASE.load(self.path + "/email").get()
+        self.user_id = self.path.split("/")[-1].split(":")[0][-4:]
+
+        a = [self.identifier, self.username, self.email, self.user_id, self.path]
+        for i, v in enumerate(a):
+            debug_print(i, ":", v)
 
     def connect(self):
         pass
@@ -41,7 +46,7 @@ class Hub:
 
 class Menu:
     @staticmethod
-    def loginmenu():
+    def loginmenu(connection):
         Hub.clear()
         print(Fore.MAGENTA + "-" * 16, Fore.RESET + "LOGIN MENU" + Fore.MAGENTA, "-" * 16,Fore.RESET)
         print(" " * 16, f"{Fore.GREEN}1.{Fore.RESET}  LOGIN")
@@ -52,16 +57,24 @@ class Menu:
             choice = input("  > ")
             if choice == "1":
                 class_ = loginsignup.Login()
-                class_.run()
+                login = class_.run()
+                debug_print("Login:", login)
+                if login != "":
+                    connection.append(Connection(login))
+                else:
+                    error_print("Invalid Login")
+                    Menu.loginmenu(connections)
                 break
             elif choice == "2":
                 class_ = loginsignup.Signup()
                 class_.run()
                 break
-            elif choice == "3": quit(0)
+            elif choice == "3":
+                quit(0)
             else:
                 error_print("Invalid choice.")
 
 
 p = Hub()
-Menu.loginmenu()
+Menu.loginmenu(connections)
+debug_print(connections)

@@ -1,0 +1,7 @@
+README.md
+setup.py
+firebase_simple.egg-info/PKG-INFO
+firebase_simple.egg-info/SOURCES.txt
+firebase_simple.egg-info/dependency_links.txt
+firebase_simple.egg-info/requires.txt
+firebase_simple.egg-info/top_level.txt

@@ -132,16 +132,7 @@ class TestSignup(unittest.TestCase):
         self.assertFalse(cl.banned, msg = "Current IP is resulting banned.")
 
 
-class TestLogin(unittest.TestCase):
-    def test_login_username(self):
-        cl = loginsignup.Signup()
-        cl.signup_checks("")
-        self.assertTrue(cl.banned, msg = "Current IP is resulting banned.")
-
-
 if __name__ == "__main__":
     suite = unittest.TestLoader().loadTestsFromTestCase(TestSignup)
     unittest.TextTestRunner(verbosity = 2).run(suite)
 
-    """suite = unittest.TestLoader().loadTestsFromTestCase(TestLogin)
-    unittest.TextTestRunner(verbosity = 2).run(suite)"""
